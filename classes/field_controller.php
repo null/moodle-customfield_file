@@ -69,7 +69,7 @@ class field_controller extends \core_customfield\field_controller {
         $fs = get_file_storage();
 
         // Delete files in the defaultvalue.
-        $fs->delete_area_files($this->get_handler()->get_configuration_context()->id, 'customfield_file',
+        $fs->delete_area_files($this->get_context()->id, 'customfield_file',
             'defaultvalue', $this->get('id'));
 
         // Delete files in the data. We can not use $fs->delete_area_files_select() because context may be different.

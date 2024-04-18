@@ -73,7 +73,7 @@ class data_controller extends \core_customfield\data_controller {
             $this->save();
         }
 
-        $context = $this->get_field()->get_handler()->get_configuration_context();
+        $context = $this->get_context();
         file_save_draft_area_files(
             $datanew->{$fieldname},
             $context->id,
@@ -96,7 +96,7 @@ class data_controller extends \core_customfield\data_controller {
     }
 
     public function instance_form_before_set_data($data) {
-        $context = $this->get_field()->get_handler()->get_configuration_context();
+        $context = $this->get_context();
         $draftideditor = file_get_submitted_draft_itemid($this->get_form_element_name());
         file_prepare_draft_area($draftideditor, $context->id, 'customfield_file',
             'value', $this->get('id'), $this->get_filemanageroptions());
@@ -111,7 +111,7 @@ class data_controller extends \core_customfield\data_controller {
     public function export_value() {
         global $OUTPUT, $PAGE;
 
-        $context = $this->get_field()->get_handler()->get_configuration_context();
+        $context = $this->get_context();
         $fs = get_file_storage();
 
         $files = $fs->get_area_files($context->id, 'customfield_file', "value",
