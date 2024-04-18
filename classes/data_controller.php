@@ -126,7 +126,7 @@ class data_controller extends \core_customfield\data_controller {
                 $file->get_component(), $file->get_filearea(), $file->get_itemid(), $file->get_filepath(),
                 $file->get_filename());
             $filename = $file->get_filename();
-            $data[] = (object)['url' => $url->out(false), 'filename' => $filename];
+            $data[] = (object)['url' => $url->out(false), 'filename' => $filename, 'fileid' => $file->get_id()];
         }
         $model = (object)['files' => $data];
 
