@@ -1,0 +1,11 @@
+{
+    "name": "andrewhancox/file",
+    "description": "A custom field to attach files to entities in Moodle",
+    "license": "GPL-3.0-or-later",
+    "type": "moodle-customfield",
+    "version": "v4.0.5",
+    "require": {
+        "composer/installers": "~2.2",
+        "moodle/moodle": "v4.*"
+    }
+}
