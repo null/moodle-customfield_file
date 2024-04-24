@@ -73,7 +73,7 @@ class data_controller extends \core_customfield\data_controller {
             $this->save();
         }
 
-        $context = $this->get_field()->get_handler()->get_configuration_context();
+        $context = $this->get_context();
         file_save_draft_area_files(
             $datanew->{$fieldname},
             $context->id,
@@ -96,7 +96,7 @@ class data_controller extends \core_customfield\data_controller {
     }
 
     public function instance_form_before_set_data($data) {
-        $context = $this->get_field()->get_handler()->get_configuration_context();
+        $context = $this->get_context();
         $draftideditor = file_get_submitted_draft_itemid($this->get_form_element_name());
         file_prepare_draft_area($draftideditor, $context->id, 'customfield_file',
             'value', $this->get('id'), $this->get_filemanageroptions());
@@ -111,7 +111,7 @@ class data_controller extends \core_customfield\data_controller {
     public function export_value() {
         global $OUTPUT, $PAGE;
 
-        $context = $this->get_field()->get_handler()->get_configuration_context();
+        $context = $this->get_context();
         $fs = get_file_storage();
 
         $files = $fs->get_area_files($context->id, 'customfield_file', "value",
@@ -126,17 +126,25 @@ class data_controller extends \core_customfield\data_controller {
                 $file->get_component(), $file->get_filearea(), $file->get_itemid(), $file->get_filepath(),
                 $file->get_filename());
             $filename = $file->get_filename();
-            $data[] = (object)['url' => $url->out(false), 'filename' => $filename];
+            $data[] = (object)['url' => $url->out(false), 'filename' => $filename, 'fileid' => $file->get_id()];
         }
         $model = (object)['files' => $data];
 
         $renderer = $PAGE->get_renderer('core_customfield');
-        $customrenderer = 'render_customfield'
+        $customrendererbase = 'render_customfield'
             . '_' . $this->get_field()->get_handler()->get_component()
-            . '_' . $this->get_field()->get_handler()->get_area()
-            . '_' . $this->get_field()->get('shortname');
-        if (method_exists($renderer, $customrenderer)) {
-            return $renderer->$customrenderer($model);
+            . '_' . $this->get_field()->get_handler()->get_area();
+        $customrendererspecific = $customrendererbase. '_' . $this->get_field()->get('shortname');
+
+        if (method_exists($renderer, $customrendererspecific)) {
+            return $renderer->$customrendererspecific($model);
+        }
+        elseif (method_exists($renderer, $customrendererbase)) {
+          $baseresult = $renderer->$customrendererbase($model,$this->get_field()->get('shortname'));
+          if($baseresult !== FALSE)
+          {
+            return $baseresult;
+          }//else: continue with default rendering
         }
 
         return $OUTPUT->render_from_template('customfield_file/exportvalue', $model);
