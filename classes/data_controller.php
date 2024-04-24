@@ -131,12 +131,20 @@ class data_controller extends \core_customfield\data_controller {
         $model = (object)['files' => $data];
 
         $renderer = $PAGE->get_renderer('core_customfield');
-        $customrenderer = 'render_customfield'
+        $customrendererbase = 'render_customfield'
             . '_' . $this->get_field()->get_handler()->get_component()
-            . '_' . $this->get_field()->get_handler()->get_area()
-            . '_' . $this->get_field()->get('shortname');
-        if (method_exists($renderer, $customrenderer)) {
-            return $renderer->$customrenderer($model);
+            . '_' . $this->get_field()->get_handler()->get_area();
+        $customrendererspecific = $customrendererbase. '_' . $this->get_field()->get('shortname');
+
+        if (method_exists($renderer, $customrendererspecific)) {
+            return $renderer->$customrendererspecific($model);
+        }
+        elseif (method_exists($renderer, $customrendererbase)) {
+          $baseresult = $renderer->$customrendererbase($model,$this->get_field()->get('shortname'));
+          if($baseresult !== FALSE)
+          {
+            return $baseresult;
+          }//else: continue with default rendering
         }
 
         return $OUTPUT->render_from_template('customfield_file/exportvalue', $model);
