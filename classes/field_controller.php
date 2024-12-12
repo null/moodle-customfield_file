@@ -68,10 +68,6 @@ class field_controller extends \core_customfield\field_controller {
         global $DB;
         $fs = get_file_storage();
 
-        // Delete files in the defaultvalue.
-        $fs->delete_area_files($this->get_handler()->get_configuration_context()->id, 'customfield_file',
-            'defaultvalue', $this->get('id'));
-
         // Delete files in the data. We can not use $fs->delete_area_files_select() because context may be different.
         $params = ['component' => 'customfield_file', 'filearea' => 'value', 'fieldid' => $this->get('id')];
         $where = "component = :component AND filearea = :filearea
