@@ -14,39 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace customfield_file;
+namespace customfield_file\task;
 
+use core\task\manager;
 use core_customfield_generator;
-use core_customfield_test_instance_form;
+use customfield_file\stdClass;
 
 /**
- * Functional test for customfield_file
+ * Functional test for task update_file_context
  *
  * @package    customfield_file
  * @copyright  2024 Catalyst IT
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class plugin_test extends \advanced_testcase {
-
-    /** @var stdClass  */
-    private $course;
-    /** @var \core_customfield\category_controller */
-    private $cfcat;
-    /** @var \core_customfield\field_controller */
-    private $cfield;
-
-    /**
-     * Tests set up.
-     */
-    public function setUp(): void {
-        $this->resetAfterTest();
-        $this->setAdminUser();
-
-        $this->cfcat = $this->get_generator()->create_category();
-        $this->cfield = $this->get_generator()->create_field(
-            ['categoryid' => $this->cfcat->get('id'), 'shortname' => 'myfield1', 'type' => 'file']);
-        $this->course = $this->getDataGenerator()->create_course();
-    }
+class update_file_context_test extends \advanced_testcase {
 
     /**
      * Get generator
@@ -59,12 +40,20 @@ class plugin_test extends \advanced_testcase {
     /**
      * Test if the context is correctly set
      *
-     * @covers ::instance_form_save
+     * @covers ::update_file_context
      */
     public function test_context() {
         global $DB, $USER;
-        $contextcourse = \context_course::instance($this->course->id);
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $cfcat = $this->get_generator()->create_category();
+        $cfield = $this->get_generator()->create_field(
+            ['categoryid' => $cfcat->get('id'), 'shortname' => 'myfield1', 'type' => 'file']);
+        $course = $this->getDataGenerator()->create_course();
+        $contextcourse = \context_course::instance($course->id);
         $usercontext = \context_user::instance($USER->id);
+
         // Create a user draft file for file customfield.
         $fs = get_file_storage();
         $userfilerecord = new \stdClass;
@@ -77,8 +66,8 @@ class plugin_test extends \advanced_testcase {
         $userfilerecord->source    = 'test';
         $userfile = $fs->create_file_from_string($userfilerecord, 'Test content');
 
-        $cfdata = $this->get_generator()->add_instance_data($this->cfield,
-            $this->course->id, $userfile->get_itemid());
+        $cfdata = $this->get_generator()->add_instance_data($cfield,
+            $course->id, $userfile->get_itemid());
 
         // Check customfield_data context.
         $this->assertEquals($contextcourse->id, $cfdata->get('contextid'));
@@ -89,5 +78,20 @@ class plugin_test extends \advanced_testcase {
         $this->assertCount(1, $files);
         $file = reset($files);
         $this->assertEquals($contextcourse->id, $file->contextid);
+
+        // Update record with wrong contextid.
+        $file->contextid = 999999;
+        $DB->update_record('files', $file);
+        $file = $DB->get_record_select('files', $where, $params);
+        $this->assertNotEquals($contextcourse->id, $file->contextid);
+
+        // Run adhoc task to set correct contextid.
+        manager::queue_adhoc_task(new update_file_context());
+        $this->runAdhocTasks();
+
+        // The contextid is fixed correctly.
+        $file = $DB->get_record_select('files', $where, $params);
+        $this->assertEquals($contextcourse->id, $file->contextid);
     }
+
 }
