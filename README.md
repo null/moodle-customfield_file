@@ -35,6 +35,22 @@ class core_customfield_renderer extends renderer {
 }
 ```
 
+Variant: if you want to be more flexible in your code, you can create a more general renderer:
+
+```
+...
+
+class core_customfield_renderer extends renderer {
+    public function render_customfield_core_course_course($model, $fieldshortname) { //see the missing "_thumbnailimage" in the function's name
+        if ($fieldname != "thumbnailimage")
+        {   //in this case, the default renderer of this module will be used.
+            return false;
+        }
+        return $this->render_from_template('customfield_file/exportvalue', $model);
+    }
+}
+```
+
 Author
 ------
 
